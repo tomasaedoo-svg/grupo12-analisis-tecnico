@@ -29,11 +29,25 @@ st.markdown("""<style>
 .encabezado h1 {color:#fff; font-size:1.9rem; margin:0; padding:0;}
 .encabezado p {color:#DCE6F2; margin:4px 0 0 0; font-size:0.95rem;}
 .pie {color:#8A94A6; font-size:0.8rem; text-align:center; margin-top:32px;}
-.grilla {display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;}
-.tarjeta {border:1px solid #D5DBE3; border-radius:10px; padding:8px 10px; display:flex; flex-direction:column;}
-.tarjeta span {color:#5B6676; font-size:0.75rem;}
-.tarjeta b {font-size:1.15rem; color:#1D2733;}
-.tarjeta small {color:#5B6676; font-size:0.7rem;}
+.grilla {display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:4px 0 14px 0;}
+.tarjeta {background:#fff; border:1px solid #E1E6ED; border-left:5px solid var(--c); border-radius:12px;
+  padding:12px 14px; display:flex; flex-direction:column; box-shadow:0 1px 3px rgba(6,57,82,0.08);}
+.tarjeta span {color:#5B6676; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em;}
+.tarjeta b {font-size:1.5rem; color:var(--c); margin:2px 0;}
+.tarjeta small {color:#5B6676; font-size:0.8rem;}
+.pasos {display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:8px 0 16px 0;}
+.paso {background:#F2F4F7; border-radius:12px; padding:16px;}
+.paso b {display:block; color:#063952; font-size:1.05rem; margin-bottom:4px;}
+.paso span {color:#5B6676; font-size:0.9rem;}
+.paso i {font-style:normal; display:inline-block; background:#063952; color:#fff; border-radius:50%;
+  width:26px; height:26px; text-align:center; line-height:26px; margin-bottom:8px; font-weight:700;}
+.diag {background:#fff; border:1px solid #E1E6ED; border-radius:14px; padding:18px 20px; box-shadow:0 1px 3px rgba(6,57,82,0.08);}
+.diag .fila {display:flex; gap:12px; padding:8px 0; border-bottom:1px solid #EEF1F5;}
+.diag .fila:last-of-type {border-bottom:none;}
+.diag .etq {min-width:150px; color:#063952; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.03em; padding-top:2px;}
+.diag .resumen {background:#EEF4F8; border-left:4px solid #063952; border-radius:8px; padding:12px 14px; margin:10px 0; line-height:1.55;}
+.insignia {display:inline-block; padding:3px 12px; border-radius:20px; color:#fff; font-weight:700; font-size:0.85rem; margin-right:8px;}
+.diag .fuente {color:#8A94A6; font-size:0.8rem; margin-top:10px;}
 @media (max-width: 640px) {
   .encabezado {flex-direction:column; align-items:flex-start; gap:10px; padding:14px 16px;}
   .encabezado img {display:none;}  /* el logo ya aparece arriba en la barra */
@@ -41,6 +55,14 @@ st.markdown("""<style>
   .encabezado h1 {font-size:1.35rem;}
   .encabezado p {font-size:0.8rem;}
   .encabezado .detalle {display:none;}
+  .grilla {grid-template-columns:1fr 1fr; gap:8px;}
+  .tarjeta {padding:8px 10px;}
+  .tarjeta span {font-size:0.68rem;}
+  .tarjeta b {font-size:1.15rem;}
+  .tarjeta small {font-size:0.7rem;}
+  .pasos {grid-template-columns:1fr; gap:8px;}
+  .diag {padding:12px 14px;}
+  .diag .fila {flex-direction:column; gap:2px;}
 }
 </style>""", unsafe_allow_html=True)
 
@@ -69,6 +91,11 @@ with st.sidebar:
     usar_ia = st.checkbox("Interpretar con IA", value=True)
 
 if archivo is None:
+    st.markdown("""<div class="pasos">
+<div class="paso"><i>1</i><b>Detectar</b><span>Máximos y mínimos (HH, HL, LH, LL), tendencia, soportes, resistencias y patrones de velas.</span></div>
+<div class="paso"><i>2</i><b>Dibujar</b><span>Gráfico de velas con zonas, línea de tendencia, pivotes y patrones marcados.</span></div>
+<div class="paso"><i>3</i><b>Interpretar</b><span>La IA redacta un diagnóstico usando solo la evidencia detectada, con su nivel de confianza.</span></div>
+</div>""", unsafe_allow_html=True)
     st.info("Sube un archivo para empezar. Los parámetros se ajustan en el menú lateral (» arriba a la izquierda). Puedes descargar uno desde Yahoo Finance (pestaña Historical Data → Download).")
     st.stop()
 
@@ -84,6 +111,37 @@ for a in avisos:
 def diagnostico_ia(resumen_json, proveedor, clave):
     """Se guarda la respuesta para no volver a llamar a la IA si nada cambió."""
     return interpretacion.interpretar_con_ia(json.loads(resumen_json), proveedor, clave)
+
+
+SECCIONES = ["TENDENCIA", "ESTRUCTURA", "SOPORTE", "PATRÓN", "DIAGNÓSTICO", "NIVEL DE CONFIANZA"]
+COLOR_CONFIANZA = {"alto": "#2E7D32", "alta": "#2E7D32", "medio": "#F9A825", "media": "#F9A825", "bajo": "#C62828", "baja": "#C62828"}
+
+
+def diagnostico_html(texto, fuente):
+    """Arma el diagnóstico como bloques (etiqueta + texto). Devuelve None si el texto no trae el formato."""
+    partes, actual = {}, None
+    for linea in texto.splitlines():
+        limpia = linea.replace("**", "").replace("#", "").strip()
+        clave = next((k for k in SECCIONES if limpia.upper().startswith(k)), None)
+        if clave and ":" in limpia:
+            actual = clave
+            partes[actual] = limpia.split(":", 1)[1].strip()
+        elif actual and limpia:
+            partes[actual] += " " + limpia
+    if len(partes) < 4:
+        return None
+    fmt = lambda t: re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html.escape(t))
+    filas = "".join(f'<div class="fila"><div class="etq">{"SOPORTE · RESISTENCIA" if k == "SOPORTE" else k}</div>'
+                    f'<div>{fmt(partes[k])}</div></div>' for k in ["TENDENCIA", "ESTRUCTURA", "SOPORTE", "PATRÓN"] if k in partes)
+    resumen = f'<div class="resumen">{fmt(partes["DIAGNÓSTICO"])}</div>' if "DIAGNÓSTICO" in partes else ""
+    confianza = ""
+    if "NIVEL DE CONFIANZA" in partes:
+        txt = partes["NIVEL DE CONFIANZA"]
+        nivel = next((n for n in COLOR_CONFIANZA if re.match(rf"\W*{n}\b", txt.lower())), None)
+        insignia = f'<span class="insignia" style="background:{COLOR_CONFIANZA[nivel]}">Confianza {nivel[:-1]}a</span>' if nivel else ""
+        confianza = f'<div>{insignia}{fmt(txt)}</div>'
+    return (f'<div class="diag">{filas}{resumen}{confianza}'
+            f'<div class="fuente">Fuente del diagnóstico: {html.escape(fuente)}. No es una recomendación de inversión.</div></div>')
 
 
 # ---------- Detectar ----------
@@ -168,6 +226,21 @@ for k, i in enumerate(sorted(por_vela)[-(2 if celular else 4):]):
 
 if tiene_vol:
     fig.add_trace(go.Bar(x=df["Fecha"], y=df["Volumen"], name="Volumen", marker_color="#90a4ae"), row=2, col=1)
+# Estilo común: fondo blanco, cuadrícula suave y línea guía al pasar el dedo o el mouse
+fig.update_layout(template="plotly_white", plot_bgcolor="#FFFFFF", hovermode="x",
+                  font=dict(family="Source Sans Pro, Arial, sans-serif", color="#1D2733"))
+fig.update_xaxes(showgrid=False, showspikes=True, spikemode="across", spikethickness=1, spikecolor="#8A94A6",
+)
+if (df["Fecha"].dt.dayofweek < 5).all():  # acciones: se ocultan los fines de semana (las cripto sí operan)
+    fig.update_xaxes(rangebreaks=[dict(bounds=["sat", "mon"])])
+fig.update_yaxes(gridcolor="#EEF1F5", side="right", showspikes=True, spikethickness=1, spikecolor="#8A94A6")
+if not celular:
+    fig.update_xaxes(rangeselector=dict(buttons=[dict(count=1, label="1M", step="month", stepmode="backward"),
+                                                 dict(count=3, label="3M", step="month", stepmode="backward"),
+                                                 dict(count=6, label="6M", step="month", stepmode="backward"),
+                                                 dict(step="all", label="Todo")],
+                                        bgcolor="#F2F4F7", activecolor="#C9D8E4", y=1.07, x=1, xanchor="right"),
+                     row=1, col=1)
 if celular:
     # Pantalla angosta: gráfico más bajo, leyenda abajo y sin arrastre (así el dedo hace scroll en la página)
     fig.update_layout(height=520, xaxis_rangeslider_visible=False, dragmode=False,
@@ -175,30 +248,27 @@ if celular:
                       margin=dict(l=0, r=0, t=10, b=10), font=dict(size=10))
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False})
 else:
-    fig.update_layout(height=700, xaxis_rangeslider_visible=False, legend=dict(orientation="h", y=1.05),
-                      margin=dict(l=10, r=10, t=30, b=10))
+    fig.update_layout(height=700, xaxis_rangeslider_visible=False, legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0, xanchor="left"),
+                      margin=dict(l=10, r=10, t=60, b=10))
     st.plotly_chart(fig, width="stretch")
 
 # ---------- Interpretar ----------
 flecha = {"Alcista": "↗", "Bajista": "↘", "Lateral": "→"}[tend["tendencia"]]
 variacion = (df["Cierre"].iat[-1] / df["Cierre"].iat[0] - 1) * 100
+COLOR_TEND = {"Alcista": "#2E7D32", "Bajista": "#C62828", "Lateral": "#1565C0"}
 tarjetas = [
-    ("Tendencia", f'{flecha} {tend["tendencia"]}', None),
+    ("Tendencia", f'{flecha} {tend["tendencia"]}', "estructura de máximos y mínimos"),
     ("Último cierre", f'{df["Cierre"].iat[-1]:,.2f}', f"{variacion:+.1f}% en el periodo"),
     ("Soporte cercano", f'{soportes[0]["nivel"]:,.2f}' if soportes else "—",
      f'{soportes[0]["toques"]} toques' if soportes else None),
     ("Resistencia cercana", f'{resistencias[0]["nivel"]:,.2f}' if resistencias else "—",
      f'{resistencias[0]["toques"]} toques' if resistencias else None),
 ]
-if celular:
-    # En el celular las columnas se apilan; se usa una grilla de 2 x 2 para que quepan en una pantalla
-    celdas = "".join(f'<div class="tarjeta"><span>{t}</span><b>{v}</b><small>{d or "&nbsp;"}</small></div>'
-                     for t, v, d in tarjetas)
-    st.markdown(f'<div class="grilla">{celdas}</div>', unsafe_allow_html=True)
-else:
-    for col, (titulo, valor, detalle) in zip(st.columns(4), tarjetas):
-        with col.container(border=True):
-            st.metric(titulo, valor, detalle, delta_color="off" if titulo != "Último cierre" else "normal")
+# Tarjetas en grilla: 4 en el PC y 2 x 2 en el celular (lo decide el CSS según el ancho)
+colores = [COLOR_TEND[tend["tendencia"]], "#2E7D32" if variacion >= 0 else "#C62828", "#26A69A", "#EF5350"]
+celdas = "".join(f'<div class="tarjeta" style="--c:{c}"><span>{t}</span><b>{v}</b><small>{d or "&nbsp;"}</small></div>'
+                 for (t, v, d), c in zip(tarjetas, colores))
+st.markdown(f'<div class="grilla">{celdas}</div>', unsafe_allow_html=True)
 st.write(f'**Estructura:** {tend["estructura"]}. {tend["medias"]}')
 
 resumen = interpretacion.resumen(df, puntos, tend, soportes, resistencias, recientes)
@@ -216,10 +286,13 @@ elif usar_ia:
     st.info("No hay clave de API configurada: se muestra el diagnóstico por reglas.")
 if texto is None:
     texto = interpretacion.interpretar_con_reglas(resumen)
-# La IA responde con negritas (**) y saltos de línea: se muestra como markdown
-with st.container(border=True):
-    st.markdown(texto.replace("$", "\\$").replace("\n", "  \n"))
-    st.caption(f"Fuente del diagnóstico: {fuente}. No es una recomendación de inversión.")
+bloque = diagnostico_html(texto, fuente)
+if bloque:
+    st.markdown(bloque, unsafe_allow_html=True)
+else:  # si la IA no respetó el formato, se muestra el texto tal cual
+    with st.container(border=True):
+        st.markdown(texto.replace("$", "\\$").replace("\n", "  \n"))
+        st.caption(f"Fuente del diagnóstico: {fuente}. No es una recomendación de inversión.")
 
 with st.expander("Patrones detectados en las últimas velas"):
     if recientes:
