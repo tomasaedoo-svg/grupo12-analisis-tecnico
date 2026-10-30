@@ -28,7 +28,7 @@ st.markdown("""<style>
 html, body, [data-testid="stAppViewContainer"] {font-variant-numeric: tabular-nums;}
 ::selection {background:#2A5D80; color:#fff;}
 html {font-size:17px;}
-.block-container {padding-top:2.2rem; max-width:1280px;}
+.block-container {padding-top:2.2rem; padding-left:2.5rem; padding-right:2.5rem; max-width:1800px;}
 [data-testid="stSidebar"] {background:#0A1C2A; border-right:1px solid var(--linea);}
 [data-testid="stLogo"], [data-testid="stSidebarLogo"], [data-testid="stHeaderLogo"] {background:#fff; border-radius:6px; padding:3px 6px; height:2.4rem !important;}
 h2.seccion {font-size:1.45rem; letter-spacing:-0.01em; font-weight:700; color:var(--azul); margin:26px 0 10px 0; padding:0;}
