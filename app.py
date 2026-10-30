@@ -130,7 +130,8 @@ elif usar_ia:
     st.info("No hay clave de API configurada: se muestra el diagnóstico por reglas.")
 if texto is None:
     texto = interpretacion.interpretar_con_reglas(resumen)
-st.text(texto)
+# La IA responde con negritas (**) y saltos de línea: se muestra como markdown
+st.markdown(texto.replace("$", "\\$").replace("\n", "  \n"))
 st.caption(f"Fuente del diagnóstico: {fuente}. No es una recomendación de inversión.")
 
 with st.expander("Patrones detectados en las últimas velas"):
