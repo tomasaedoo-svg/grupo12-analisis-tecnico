@@ -23,58 +23,100 @@ LOGO = Path(__file__).parent / "logo.png"  # logo de la universidad (opcional)
 
 st.set_page_config(page_title="Análisis Técnico + IA · Grupo 12", page_icon="📈", layout="wide")
 st.markdown("""<style>
-.encabezado {display:flex; align-items:center; gap:20px; padding:18px 24px; border-radius:12px;
-  background:linear-gradient(90deg,#063952 0%,#0E5A7E 100%); color:#fff; margin-bottom:18px;}
-.encabezado img {height:72px; background:#fff; border-radius:10px; padding:8px 12px;}
-.encabezado h1 {color:#fff; font-size:1.9rem; margin:0; padding:0;}
-.encabezado p {color:#DCE6F2; margin:4px 0 0 0; font-size:0.95rem;}
-.pie {color:#8A94A6; font-size:0.8rem; text-align:center; margin-top:32px;}
-.grilla {display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:4px 0 14px 0;}
-.tarjeta {background:#fff; border:1px solid #E1E6ED; border-left:5px solid var(--c); border-radius:12px;
-  padding:12px 14px; display:flex; flex-direction:column; box-shadow:0 1px 3px rgba(6,57,82,0.08);}
-.tarjeta span {color:#5B6676; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em;}
-.tarjeta b {font-size:1.5rem; color:var(--c); margin:2px 0;}
-.tarjeta small {color:#5B6676; font-size:0.8rem;}
-.pasos {display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:8px 0 16px 0;}
-.paso {background:#F2F4F7; border-radius:12px; padding:16px;}
-.paso b {display:block; color:#063952; font-size:1.05rem; margin-bottom:4px;}
-.paso span {color:#5B6676; font-size:0.9rem;}
-.paso i {font-style:normal; display:inline-block; background:#063952; color:#fff; border-radius:50%;
-  width:26px; height:26px; text-align:center; line-height:26px; margin-bottom:8px; font-weight:700;}
-.diag {background:#fff; border:1px solid #E1E6ED; border-radius:14px; padding:18px 20px; box-shadow:0 1px 3px rgba(6,57,82,0.08);}
-.diag .fila {display:flex; gap:12px; padding:8px 0; border-bottom:1px solid #EEF1F5;}
-.diag .fila:last-of-type {border-bottom:none;}
-.diag .etq {min-width:150px; color:#063952; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.03em; padding-top:2px;}
-.diag .resumen {background:#EEF4F8; border-left:4px solid #063952; border-radius:8px; padding:12px 14px; margin:10px 0; line-height:1.55;}
-.insignia {display:inline-block; padding:3px 12px; border-radius:20px; color:#fff; font-weight:700; font-size:0.85rem; margin-right:8px;}
-.diag .fuente {color:#8A94A6; font-size:0.8rem; margin-top:10px;}
+:root {--azul:#063952; --azul-2:#0B4A69; --fondo:#F4F6F9; --panel:#FFFFFF; --linea:#DCE3EB; --texto:#16232E;
+  --suave:#52606D; --sube:#1E7B4C; --baja:#B3261E; --lateral:#1F5FA8;}
+html, body, [data-testid="stAppViewContainer"] {font-variant-numeric: tabular-nums;}
+::selection {background:#CFE0EC; color:var(--azul);}
+.block-container {padding-top:2.2rem; max-width:1280px;}
+[data-testid="stSidebar"] {background:#E9EEF4; border-right:1px solid var(--linea);}
+h2.seccion {font-size:1.25rem; font-weight:700; color:var(--azul); margin:26px 0 10px 0; padding:0;}
+/* Barra superior */
+.barra {display:flex; align-items:center; justify-content:space-between; gap:20px; padding:4px 0 16px 0;
+  border-bottom:1px solid var(--linea); margin-bottom:18px;}
+.barra .marca {display:flex; align-items:center; gap:18px;}
+.barra img {height:52px;}
+.barra .sep {width:1px; height:40px; background:var(--linea);}
+.barra h1 {font-size:1.6rem; line-height:1.15; color:var(--azul); margin:0; padding:0; font-weight:700;}
+.barra p {color:var(--suave); margin:2px 0 0 0; font-size:0.92rem;}
+.barra .grupo {text-align:right; color:var(--suave); font-size:0.85rem; line-height:1.4;}
+.barra .grupo b {color:var(--texto);}
+/* Franja de cotización */
+.franja {background:var(--azul); color:#fff; border-radius:8px; padding:18px 22px; display:grid;
+  grid-template-columns:minmax(220px,1.3fr) repeat(4, minmax(0,1fr)); gap:18px; align-items:end; margin:6px 0 14px 0;
+  box-shadow:0 2px 6px rgba(6,57,82,0.18);}
+.franja .dato {display:flex; flex-direction:column; gap:3px; min-width:0;}
+.franja .rot {color:#B9CCDA; font-size:0.82rem;}
+.franja .val {font-size:1.25rem; font-weight:700; color:#fff; white-space:nowrap; display:flex; align-items:center; gap:6px;}
+.franja .det {color:#B9CCDA; font-size:0.82rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+.franja .precio {font-size:2.1rem; line-height:1.05;}
+.franja .ficha {display:inline-block; padding:1px 8px; border-radius:4px; font-size:0.9rem; font-weight:700; margin-left:4px;}
+.franja .ficha.sube {background:#2C8A5A; color:#fff;} .franja .ficha.baja {background:#C4423A; color:#fff;}
+.franja svg {flex:none;}
+.nota-medias {color:var(--suave); font-size:0.9rem; margin:-4px 0 4px 2px;}
+/* Paneles */
+[data-testid="stPlotlyChart"] {background:var(--panel); border:1px solid var(--linea); border-radius:8px; padding:8px 6px 4px 6px;}
+.panel {background:var(--panel); border:1px solid var(--linea); border-radius:8px; padding:6px 22px 18px 22px;
+  box-shadow:0 1px 2px rgba(6,57,82,0.05); margin-bottom:14px;}
+/* Pauta de evidencia */
+.pauta {width:100%; border-collapse:collapse; margin:0; border:none;}
+.pauta th, .pauta td {border:none !important; background:transparent !important;}
+.pauta th {text-align:left; vertical-align:top; width:190px; color:var(--azul); font-weight:700; font-size:0.95rem; padding:12px 16px 12px 0;}
+.pauta td {padding:12px 0; color:var(--texto); line-height:1.5;}
+.pauta tr + tr th, .pauta tr + tr td {border-top:1px solid #E8EDF2 !important;}
+.lectura {font-size:1.05rem; line-height:1.6; color:var(--texto); max-width:72ch; margin:14px 0 18px 0;}
+.escala {display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding-top:14px; border-top:1px solid #E8EDF2;}
+.escala .tramos {display:flex; gap:4px;}
+.escala .tramo {width:74px; padding:5px 0; text-align:center; font-size:0.85rem; font-weight:600; border-radius:4px;
+  background:#EEF2F6; color:#7B8794;}
+.escala .tramo.on {color:#fff;}
+.escala .tramo.on.baja {background:var(--baja);} .escala .tramo.on.media {background:#B7791F;} .escala .tramo.on.alta {background:var(--sube);}
+.escala .razon {color:var(--suave); font-size:0.95rem; flex:1; min-width:220px;}
+.fuente {color:#6B7785; font-size:0.82rem; margin-top:12px;}
+/* Estado vacío */
+.vacio {background:var(--panel); border:1px solid var(--linea); border-radius:8px; padding:20px 22px; margin-top:8px;}
+.vacio h3 {font-size:1.1rem; color:var(--azul); margin:0 0 6px 0; padding:0;}
+.vacio p {color:var(--suave); margin:0 0 12px 0; max-width:72ch;}
+.vacio table {border-collapse:collapse; font-size:0.9rem; min-width:100%;}
+.vacio th {background:#EEF2F6; color:var(--azul); text-align:right; padding:6px 12px; font-weight:700;}
+.vacio th:first-child, .vacio td:first-child {text-align:left;}
+.vacio td {white-space:nowrap; padding:6px 12px; text-align:right; border-top:1px solid #E8EDF2; color:var(--texto);}
+.vacio .tabla {overflow-x:auto;}
+.vacio ol {margin:14px 0 0 0; padding-left:20px; color:var(--texto);}
+.vacio li {margin:3px 0;}
+.pie {color:#6B7785; font-size:0.8rem; text-align:center; margin-top:36px; padding-top:14px; border-top:1px solid var(--linea);}
+@media (max-width: 900px) {
+  .franja {grid-template-columns:1fr 1fr; gap:14px 16px;}
+  .franja .principal {grid-column:1 / -1;}
+}
 @media (max-width: 640px) {
-  .encabezado {flex-direction:column; align-items:flex-start; gap:10px; padding:14px 16px;}
-  .encabezado img {display:none;}  /* el logo ya aparece arriba en la barra */
-  .block-container {padding-top:3.5rem; padding-left:0.8rem; padding-right:0.8rem;}
-  .encabezado h1 {font-size:1.35rem;}
-  .encabezado p {font-size:0.8rem;}
-  .encabezado .detalle {display:none;}
-  .grilla {grid-template-columns:1fr 1fr; gap:8px;}
-  .tarjeta {padding:8px 10px;}
-  .tarjeta span {font-size:0.68rem;}
-  .tarjeta b {font-size:1.15rem;}
-  .tarjeta small {font-size:0.7rem;}
-  .pasos {grid-template-columns:1fr; gap:8px;}
-  .diag {padding:12px 14px;}
-  .diag .fila {flex-direction:column; gap:2px;}
+  .block-container {padding-top:3.4rem; padding-left:0.8rem; padding-right:0.8rem;}
+  .barra {padding-bottom:12px; margin-bottom:12px;}
+  .barra img, .barra .sep, .barra .grupo {display:none;}  /* el logo ya aparece en la barra de arriba */
+  .barra h1 {font-size:1.3rem;}
+  .barra p {font-size:0.82rem;}
+  .franja {padding:14px 16px;}
+  .franja .val {font-size:1.05rem;}
+  .franja .val.precio {font-size:1.7rem;}
+  .panel {padding:4px 14px 14px 14px;}
+  .pauta th, .pauta td {display:block; width:auto; padding:0;}
+  .pauta th {padding-top:10px;}
+  .pauta td, .pauta tr + tr td {padding:2px 0 10px 0; border-top:none !important;}
+  .franja {align-items:start;}
+  .escala .tramo {width:62px;}
+  h2.seccion {font-size:1.1rem; margin-top:20px;}
 }
 </style>""", unsafe_allow_html=True)
 
 logo_html = ""
 if LOGO.exists():
-    logo_html = f'<img src="data:image/png;base64,{base64.b64encode(LOGO.read_bytes()).decode()}" alt="Logo">'
+    logo_html = f'<img src="data:image/png;base64,{base64.b64encode(LOGO.read_bytes()).decode()}" alt="Universidad Finis Terrae"><div class="sep"></div>'
     st.logo(str(LOGO))
-st.markdown(f"""<div class="encabezado">{logo_html}<div>
+st.markdown(f"""<div class="barra"><div class="marca">{logo_html}<div>
 <h1>Análisis Técnico + IA</h1>
-<p>Análisis Técnico Bursátil · Prof. Leopoldo Calderón · Grupo 12: Martín Tapia, Tomás Aedo y Martín Moraga</p>
-<p class="detalle">Detectar · Dibujar · Interpretar — sube un archivo con Fecha, Apertura, Máximo, Mínimo y Cierre (Volumen opcional).</p>
-</div></div>""", unsafe_allow_html=True)
+<p>Detecta, dibuja e interpreta un gráfico de velas a partir de datos OHLC.</p>
+</div></div>
+<div class="grupo"><b>Grupo 12</b> · Análisis Técnico Bursátil<br>Prof. Leopoldo Calderón<br>Martín Tapia, Tomás Aedo y Martín Moraga</div>
+</div>""", unsafe_allow_html=True)
 
 # En el celular la barra lateral queda escondida: el archivo se sube en la página
 # y los parámetros finos quedan en la barra lateral
@@ -91,12 +133,18 @@ with st.sidebar:
     usar_ia = st.checkbox("Interpretar con IA", value=True)
 
 if archivo is None:
-    st.markdown("""<div class="pasos">
-<div class="paso"><i>1</i><b>Detectar</b><span>Máximos y mínimos (HH, HL, LH, LL), tendencia, soportes, resistencias y patrones de velas.</span></div>
-<div class="paso"><i>2</i><b>Dibujar</b><span>Gráfico de velas con zonas, línea de tendencia, pivotes y patrones marcados.</span></div>
-<div class="paso"><i>3</i><b>Interpretar</b><span>La IA redacta un diagnóstico usando solo la evidencia detectada, con su nivel de confianza.</span></div>
+    st.markdown("""<div class="vacio">
+<h3>Formato del archivo</h3>
+<p>Una fila por vela diaria. Se aceptan nombres en español o inglés (Date, Open, High, Low, Close, Volume) y archivos de Yahoo Finance o Google Finanzas. El volumen es opcional.</p>
+<div class="tabla"><table><tr><th>Fecha</th><th>Apertura</th><th>Máximo</th><th>Mínimo</th><th>Cierre</th><th>Volumen</th></tr>
+<tr><td>2026-10-27</td><td>343,17</td><td>347,78</td><td>342,39</td><td>347,10</td><td>39.984.395</td></tr>
+<tr><td>2026-10-28</td><td>346,92</td><td>347,18</td><td>343,52</td><td>343,83</td><td>35.714.331</td></tr>
+<tr><td>2026-10-29</td><td>348,00</td><td>351,43</td><td>347,30</td><td>348,91</td><td>42.582.126</td></tr></table></div>
+<ol><li><b>Detectar:</b> máximos y mínimos (HH, HL, LH, LL), tendencia, soportes, resistencias y patrones de velas.</li>
+<li><b>Dibujar:</b> zonas, línea de tendencia, pivotes y patrones sobre el gráfico.</li>
+<li><b>Interpretar:</b> la IA redacta el diagnóstico solo con esa evidencia e indica su nivel de confianza.</li></ol>
+<p style="margin-top:12px">Los ajustes de sensibilidad están en el menú lateral (» arriba a la izquierda).</p>
 </div>""", unsafe_allow_html=True)
-    st.info("Sube un archivo para empezar. Los parámetros se ajustan en el menú lateral (» arriba a la izquierda). Puedes descargar uno desde Yahoo Finance (pestaña Historical Data → Download).")
     st.stop()
 
 try:
@@ -114,11 +162,12 @@ def diagnostico_ia(resumen_json, proveedor, clave):
 
 
 SECCIONES = ["TENDENCIA", "ESTRUCTURA", "SOPORTE", "PATRÓN", "DIAGNÓSTICO", "NIVEL DE CONFIANZA"]
-COLOR_CONFIANZA = {"alto": "#2E7D32", "alta": "#2E7D32", "medio": "#F9A825", "media": "#F9A825", "bajo": "#C62828", "baja": "#C62828"}
+NIVELES = {"bajo": "baja", "baja": "baja", "medio": "media", "media": "media", "alto": "alta", "alta": "alta"}
 
 
 def diagnostico_html(texto, fuente):
-    """Arma el diagnóstico como bloques (etiqueta + texto). Devuelve None si el texto no trae el formato."""
+    """Arma el diagnóstico como pauta de evidencia (conclusión por fila) y una escala de confianza.
+    Devuelve None si el texto no trae el formato pedido."""
     partes, actual = {}, None
     for linea in texto.splitlines():
         limpia = linea.replace("**", "").replace("#", "").strip()
@@ -131,17 +180,27 @@ def diagnostico_html(texto, fuente):
     if len(partes) < 4:
         return None
     fmt = lambda t: re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html.escape(t))
-    filas = "".join(f'<div class="fila"><div class="etq">{"SOPORTE · RESISTENCIA" if k == "SOPORTE" else k}</div>'
-                    f'<div>{fmt(partes[k])}</div></div>' for k in ["TENDENCIA", "ESTRUCTURA", "SOPORTE", "PATRÓN"] if k in partes)
-    resumen = f'<div class="resumen">{fmt(partes["DIAGNÓSTICO"])}</div>' if "DIAGNÓSTICO" in partes else ""
-    confianza = ""
+    nombres = {"TENDENCIA": "Tendencia", "ESTRUCTURA": "Estructura", "SOPORTE": "Soporte y resistencia", "PATRÓN": "Patrón"}
+    filas = "".join(f"<tr><th>{nombres[k]}</th><td>{fmt(partes[k])}</td></tr>" for k in nombres if k in partes)
+    lectura = f'<p class="lectura">{fmt(partes["DIAGNÓSTICO"])}</p>' if "DIAGNÓSTICO" in partes else ""
+    escala = ""
     if "NIVEL DE CONFIANZA" in partes:
         txt = partes["NIVEL DE CONFIANZA"]
-        nivel = next((n for n in COLOR_CONFIANZA if re.match(rf"\W*{n}\b", txt.lower())), None)
-        insignia = f'<span class="insignia" style="background:{COLOR_CONFIANZA[nivel]}">Confianza {nivel[:-1]}a</span>' if nivel else ""
-        confianza = f'<div>{insignia}{fmt(txt)}</div>'
-    return (f'<div class="diag">{filas}{resumen}{confianza}'
-            f'<div class="fuente">Fuente del diagnóstico: {html.escape(fuente)}. No es una recomendación de inversión.</div></div>')
+        nivel = next((v for k, v in NIVELES.items() if re.match(rf"\W*{k}\b", txt.lower())), None)
+        razon = re.sub(r"^\W*(alt[oa]|medi[oa]|baj[oa])\b[\s,.:;-]*", "", txt, flags=re.I) or txt
+        tramos = "".join(f'<span class="tramo {n}{" on" if n == nivel else ""}">{n.capitalize()}</span>'
+                         for n in ["baja", "media", "alta"])
+        escala = (f'<div class="escala"><b>Confianza</b><div class="tramos">{tramos}</div>'
+                  f'<span class="razon">{fmt(razon[:1].upper() + razon[1:])}</span></div>')
+    return (f'<div class="panel"><table class="pauta">{filas}</table>{lectura}{escala}'
+            f'<div class="fuente">Fuente: {html.escape(fuente)}. No es una recomendación de inversión.</div></div>')
+
+
+FLECHAS = {  # flechas dibujadas en SVG (sube, baja, lateral)
+    "Alcista": '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14 L14 3 M7 3 H14 V10"/></svg>',
+    "Bajista": '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4 L14 15 M14 8 V15 H7"/></svg>',
+    "Lateral": '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 H15 M10 4 L15 9 L10 14"/></svg>',
+}
 
 
 # ---------- Detectar ----------
@@ -154,20 +213,42 @@ recientes = patrones.recientes(todos, df, ultimas)
 patrones.ubicar(todos, df, soportes, resistencias, holgura=0.5 * float(estructura.atr(df).iat[-1]))
 a_dibujar = todos if ver_todos else recientes
 
+# ---------- Franja con los datos clave ----------
+nombre_archivo = getattr(archivo, "name", "datos").rsplit(".", 1)[0]
+variacion = (df["Cierre"].iat[-1] / df["Cierre"].iat[0] - 1) * 100
+ult_patron = recientes[-1] if recientes else None
+zona = lambda zs: (f'{zs[0]["nivel"]:,.2f}', f'{zs[0]["toques"]} toques · {abs(zs[0]["nivel"] / df["Cierre"].iat[-1] - 1) * 100:.1f}% del precio') if zs else ("—", "no identificada")
+datos_franja = [
+    ("Tendencia", f'{FLECHAS[tend["tendencia"]]}{tend["tendencia"]}', tend["estructura"]),
+    ("Soporte cercano", *zona(soportes)),
+    ("Resistencia cercana", *zona(resistencias)),
+    ("Último patrón", html.escape(ult_patron["patron"]) if ult_patron else "Ninguno",
+     f'{ult_patron["sesgo"]}, {ult_patron["ubicacion"]}' if ult_patron else f"en las últimas {ultimas} velas"),
+]
+celdas = "".join(f'<div class="dato"><span class="rot">{r}</span><span class="val">{v}</span><span class="det" title="{html.escape(d)}">{html.escape(d)}</span></div>'
+                 for r, v, d in datos_franja)
+st.markdown(f"""<div class="franja"><div class="dato principal">
+<span class="rot">{html.escape(nombre_archivo)} · {df["Fecha"].iat[0]:%d-%m-%Y} a {df["Fecha"].iat[-1]:%d-%m-%Y} · {len(df)} velas</span>
+<span class="val precio">{df["Cierre"].iat[-1]:,.2f}<span class="ficha {'sube' if variacion >= 0 else 'baja'}">{variacion:+.1f}%</span></span>
+<span class="det">Último cierre · variación en el periodo</span></div>{celdas}</div>
+<div class="nota-medias">{html.escape(tend["medias"])}</div>""", unsafe_allow_html=True)
+
 # ---------- Dibujar ----------
+st.markdown('<h2 class="seccion">Gráfico de velas</h2>', unsafe_allow_html=True)
 letra = 9 if celular else 11  # tamaño de los textos del gráfico
 tiene_vol = "Volumen" in df and df["Volumen"].fillna(0).sum() > 0
 fig = make_subplots(rows=2 if tiene_vol else 1, cols=1, shared_xaxes=True,
                     row_heights=[0.8, 0.2] if tiene_vol else [1], vertical_spacing=0.03)
 fig.add_trace(go.Candlestick(x=df["Fecha"], open=df["Apertura"], high=df["Maximo"], low=df["Minimo"],
                              close=df["Cierre"], name="Precio",
-                             increasing_line_color="#26a69a", decreasing_line_color="#ef5350"), row=1, col=1)
-for n, color in [(20, "#f9a825"), (50, "#7e57c2")]:
+                             increasing_line_color="#2C8A5A", decreasing_line_color="#C4423A",
+                             increasing_fillcolor="#2C8A5A", decreasing_fillcolor="#C4423A"), row=1, col=1)
+for n, color in [(20, "#C08A2B"), (50, "#063952")]:
     fig.add_trace(go.Scatter(x=df["Fecha"], y=df["Cierre"].rolling(n).mean(), name=f"Media {n}",
                              line=dict(color=color, width=1.2)), row=1, col=1)
 
 # Zonas de soporte y resistencia
-for zonas, color, nombre in [(soportes, "rgba(38,166,154,0.18)", "Soporte"), (resistencias, "rgba(239,83,80,0.18)", "Resistencia")]:
+for zonas, color, nombre in [(soportes, "rgba(44,138,90,0.16)", "Soporte"), (resistencias, "rgba(196,66,58,0.16)", "Resistencia")]:
     for z in zonas:
         fig.add_hrect(y0=z["bajo"], y1=z["alto"], fillcolor=color, line_width=0, row=1, col=1)
         fig.add_annotation(x=df["Fecha"].iat[0], y=z["nivel"], text=f'{nombre[0] if celular else nombre} {z["nivel"]:,.2f}' + ("" if celular else f' ({z["toques"]} toques)'),
@@ -177,19 +258,19 @@ for zonas, color, nombre in [(soportes, "rgba(38,166,154,0.18)", "Soporte"), (re
 if tend["tendencia"] == "Lateral" and soportes and resistencias:
     desde = puntos[-6]["fecha"] if len(puntos) >= 6 else df["Fecha"].iat[0]
     fig.add_shape(type="rect", x0=desde, x1=df["Fecha"].iat[-1], y0=soportes[0]["nivel"], y1=resistencias[0]["nivel"],
-                  line=dict(color="#1565c0", width=2, dash="dot"), fillcolor="rgba(21,101,192,0.04)", row=1, col=1)
+                  line=dict(color="#1F5FA8", width=2, dash="dot"), fillcolor="rgba(31,95,168,0.04)", row=1, col=1)
     if not celular:  # en pantalla chica el texto tapa las velas; el rectángulo basta
         fig.add_annotation(x=desde, y=resistencias[0]["nivel"], text="Rango lateral", showarrow=False, xanchor="left",
-                           yanchor="bottom", font=dict(size=letra, color="#1565c0"), row=1, col=1)
+                           yanchor="bottom", font=dict(size=letra, color="#1F5FA8"), row=1, col=1)
 
 # Último precio (línea punteada; el valor aparece en la leyenda)
 ultimo = float(df["Cierre"].iat[-1])
 fig.add_trace(go.Scatter(x=[df["Fecha"].iat[0], df["Fecha"].iat[-1]], y=[ultimo, ultimo], mode="lines",
-                         name=f"Último cierre {ultimo:,.2f}", line=dict(color="#455a64", width=1, dash="dot"),
+                         name=f"Último cierre {ultimo:,.2f}", line=dict(color="#52606D", width=1, dash="dot"),
                          hoverinfo="skip"), row=1, col=1)
 
 # Pivotes con su etiqueta
-for tipo, pos, color in [("max", "top center", "#c62828"), ("min", "bottom center", "#2e7d32")]:
+for tipo, pos, color in [("max", "top center", "#B3261E"), ("min", "bottom center", "#1E7B4C")]:
     sel = [p for p in puntos if p["tipo"] == tipo]
     fig.add_trace(go.Scatter(x=[p["fecha"] for p in sel], y=[p["precio"] for p in sel], mode="markers+text",
                              text=[p["etiqueta"] for p in sel], textposition=pos, name="Máximos" if tipo == "max" else "Mínimos",
@@ -198,11 +279,11 @@ for tipo, pos, color in [("max", "top center", "#c62828"), ("min", "bottom cente
 # Línea de tendencia
 if linea:
     fig.add_trace(go.Scatter(x=linea["x"], y=linea["y"], mode="lines", name=f'Línea de tendencia {tend["tendencia"].lower()}',
-                             line=dict(color="#1565c0", width=2, dash="dash")), row=1, col=1)
+                             line=dict(color="#1F5FA8", width=2, dash="dash")), row=1, col=1)
 
 # Patrones de velas: un triángulo por vela (pasando el mouse se ve el nombre)
 # y el nombre escrito solo en las últimas velas con patrón, para que no se tapen
-COLORES = {"alcista": "#2e7d32", "bajista": "#c62828", "neutral": "#616161"}
+COLORES = {"alcista": "#1E7B4C", "bajista": "#B3261E", "neutral": "#52606D"}
 por_vela = {}
 for h in a_dibujar:
     por_vela.setdefault(h["i"], []).append(h)
@@ -225,21 +306,21 @@ for k, i in enumerate(sorted(por_vela)[-(2 if celular else 4):]):
                        font=dict(size=letra, color=COLORES[sesgo]), arrowcolor=COLORES[sesgo], row=1, col=1)
 
 if tiene_vol:
-    fig.add_trace(go.Bar(x=df["Fecha"], y=df["Volumen"], name="Volumen", marker_color="#90a4ae"), row=2, col=1)
+    fig.add_trace(go.Bar(x=df["Fecha"], y=df["Volumen"], name="Volumen", marker_color="#A9B8C6"), row=2, col=1)
 # Estilo común: fondo blanco, cuadrícula suave y línea guía al pasar el dedo o el mouse
 fig.update_layout(template="plotly_white", plot_bgcolor="#FFFFFF", hovermode="x",
-                  font=dict(family="Source Sans Pro, Arial, sans-serif", color="#1D2733"))
-fig.update_xaxes(showgrid=False, showspikes=True, spikemode="across", spikethickness=1, spikecolor="#8A94A6",
-)
+                  font=dict(family="Source Sans Pro, Arial, sans-serif", color="#16232E"),
+                  paper_bgcolor="#FFFFFF", hoverlabel=dict(bgcolor="#063952", font_color="#FFFFFF", bordercolor="#063952"))
+fig.update_xaxes(showgrid=False, showspikes=True, spikemode="across", spikethickness=1, spikecolor="#7B8794")
 if (df["Fecha"].dt.dayofweek < 5).all():  # acciones: se ocultan los fines de semana (las cripto sí operan)
     fig.update_xaxes(rangebreaks=[dict(bounds=["sat", "mon"])])
-fig.update_yaxes(gridcolor="#EEF1F5", side="right", showspikes=True, spikethickness=1, spikecolor="#8A94A6")
+fig.update_yaxes(gridcolor="#EDF1F5", side="right", showspikes=True, spikethickness=1, spikecolor="#7B8794")
 if not celular:
     fig.update_xaxes(rangeselector=dict(buttons=[dict(count=1, label="1M", step="month", stepmode="backward"),
                                                  dict(count=3, label="3M", step="month", stepmode="backward"),
                                                  dict(count=6, label="6M", step="month", stepmode="backward"),
                                                  dict(step="all", label="Todo")],
-                                        bgcolor="#F2F4F7", activecolor="#C9D8E4", y=1.07, x=1, xanchor="right"),
+                                        bgcolor="#EEF2F6", activecolor="#CFE0EC", y=1.07, x=1, xanchor="right"),
                      row=1, col=1)
 if celular:
     # Pantalla angosta: gráfico más bajo, leyenda abajo y sin arrastre (así el dedo hace scroll en la página)
@@ -253,26 +334,8 @@ else:
     st.plotly_chart(fig, width="stretch")
 
 # ---------- Interpretar ----------
-flecha = {"Alcista": "↗", "Bajista": "↘", "Lateral": "→"}[tend["tendencia"]]
-variacion = (df["Cierre"].iat[-1] / df["Cierre"].iat[0] - 1) * 100
-COLOR_TEND = {"Alcista": "#2E7D32", "Bajista": "#C62828", "Lateral": "#1565C0"}
-tarjetas = [
-    ("Tendencia", f'{flecha} {tend["tendencia"]}', "estructura de máximos y mínimos"),
-    ("Último cierre", f'{df["Cierre"].iat[-1]:,.2f}', f"{variacion:+.1f}% en el periodo"),
-    ("Soporte cercano", f'{soportes[0]["nivel"]:,.2f}' if soportes else "—",
-     f'{soportes[0]["toques"]} toques' if soportes else None),
-    ("Resistencia cercana", f'{resistencias[0]["nivel"]:,.2f}' if resistencias else "—",
-     f'{resistencias[0]["toques"]} toques' if resistencias else None),
-]
-# Tarjetas en grilla: 4 en el PC y 2 x 2 en el celular (lo decide el CSS según el ancho)
-colores = [COLOR_TEND[tend["tendencia"]], "#2E7D32" if variacion >= 0 else "#C62828", "#26A69A", "#EF5350"]
-celdas = "".join(f'<div class="tarjeta" style="--c:{c}"><span>{t}</span><b>{v}</b><small>{d or "&nbsp;"}</small></div>'
-                 for (t, v, d), c in zip(tarjetas, colores))
-st.markdown(f'<div class="grilla">{celdas}</div>', unsafe_allow_html=True)
-st.write(f'**Estructura:** {tend["estructura"]}. {tend["medias"]}')
-
 resumen = interpretacion.resumen(df, puntos, tend, soportes, resistencias, recientes)
-st.subheader("Diagnóstico técnico")
+st.markdown('<h2 class="seccion">Diagnóstico técnico</h2>', unsafe_allow_html=True)
 proveedor, clave = interpretacion.obtener_clave()
 texto, fuente = None, "reglas"
 if usar_ia and clave:
@@ -304,10 +367,10 @@ with st.expander("Datos que recibe la IA (evidencia)"):
     st.json(resumen)
 
 # ---------- Descargar ----------
-nombre_archivo = getattr(archivo, "name", "datos").rsplit(".", 1)[0]
 cuerpo = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html.escape(texto)).replace("\n", "<br>")
 reporte = f"""<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Análisis técnico {html.escape(nombre_archivo)}</title>
-<style>body{{font-family:Arial,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#222}}</style></head><body>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;700&display=swap" rel="stylesheet">
+<style>body{{font-family:"Source Sans 3",system-ui,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#16232E;font-variant-numeric:tabular-nums}} h1,h2{{color:#063952}}</style></head><body>
 <h1>Análisis técnico · {html.escape(nombre_archivo)}</h1>
 <p>Periodo: {resumen["periodo"]} · {resumen["velas"]} velas · Último cierre: {resumen["ultimo_cierre"]:,}</p>
 {fig.to_html(full_html=False, include_plotlyjs="cdn")}
