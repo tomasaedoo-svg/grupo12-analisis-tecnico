@@ -77,13 +77,29 @@ if linea:
     fig.add_trace(go.Scatter(x=linea["x"], y=linea["y"], mode="lines", name=f'Línea de tendencia {tend["tendencia"].lower()}',
                              line=dict(color="#1565c0", width=2, dash="dash")), row=1, col=1)
 
-# Patrones de velas
-for k, h in enumerate(a_dibujar):
-    alcista = h["sesgo"] == "alcista"
-    alto = 35 + 22 * (k % 3)  # alterna la altura para que los nombres no se tapen
-    fig.add_annotation(x=h["fecha"], y=h["precio"], text=h["patron"], showarrow=True, arrowhead=2,
-                       ay=alto if alcista else -alto, font=dict(size=10, color="#2e7d32" if alcista else "#c62828" if h["sesgo"] == "bajista" else "#555"),
-                       arrowcolor="#2e7d32" if alcista else "#c62828" if h["sesgo"] == "bajista" else "#555", row=1, col=1)
+# Patrones de velas: un triángulo por vela (pasando el mouse se ve el nombre)
+# y el nombre escrito solo en las últimas velas con patrón, para que no se tapen
+COLORES = {"alcista": "#2e7d32", "bajista": "#c62828", "neutral": "#616161"}
+por_vela = {}
+for h in a_dibujar:
+    por_vela.setdefault(h["i"], []).append(h)
+for sesgo, simbolo in [("alcista", "triangle-up"), ("bajista", "triangle-down"), ("neutral", "circle")]:
+    sel = [hs for hs in por_vela.values() if hs[-1]["sesgo"] == sesgo]
+    if not sel:
+        continue
+    fig.add_trace(go.Scatter(
+        x=[hs[0]["fecha"] for hs in sel],
+        y=[df["Minimo"].iat[hs[0]["i"]] * 0.99 if sesgo == "alcista" else df["Maximo"].iat[hs[0]["i"]] * 1.01 for hs in sel],
+        mode="markers", name=f"Patrón {sesgo}", marker=dict(symbol=simbolo, size=11, color=COLORES[sesgo]),
+        hovertext=[" + ".join(h["patron"] for h in hs) for hs in sel], hoverinfo="text+x"), row=1, col=1)
+for k, i in enumerate(sorted(por_vela)[-4:]):
+    hs = por_vela[i]
+    sesgo = hs[-1]["sesgo"]
+    abajo = sesgo == "alcista"
+    y = df["Minimo"].iat[i] if abajo else df["Maximo"].iat[i]
+    fig.add_annotation(x=hs[0]["fecha"], y=y, text=" + ".join(h["patron"] for h in hs), showarrow=True, arrowhead=0,
+                       ax=0, ay=(45 + 28 * k) * (1 if abajo else -1), bgcolor="rgba(255,255,255,0.85)",
+                       font=dict(size=11, color=COLORES[sesgo]), arrowcolor=COLORES[sesgo], row=1, col=1)
 
 if tiene_vol:
     fig.add_trace(go.Bar(x=df["Fecha"], y=df["Volumen"], name="Volumen", marker_color="#90a4ae"), row=2, col=1)
