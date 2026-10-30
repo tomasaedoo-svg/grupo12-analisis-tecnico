@@ -59,7 +59,7 @@ st.markdown(f"""<div class="encabezado">{logo_html}<div>
 ua = st.context.headers.get("User-Agent", "")
 celular = any(m in ua for m in ("Mobi", "Android", "iPhone", "iPad"))
 
-archivo = st.file_uploader("Archivo CSV o Excel con los datos OHLC", type=["csv", "xlsx", "xls"])
+archivo = st.file_uploader("Archivo CSV o Excel con los datos OHLC", type=["csv", "txt", "xlsx", "xls"])
 with st.sidebar:
     st.header("Parámetros")
     ventana = st.slider("Sensibilidad de máximos y mínimos (velas a cada lado)", 2, 15, 5,
