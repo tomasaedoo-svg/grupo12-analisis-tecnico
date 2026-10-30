@@ -4,9 +4,11 @@ Grupo 12: Martín Tapia, Tomás Aedo, Martín Moraga.
 Para correrla en el computador:  streamlit run app.py
 La página y el gráfico son la parte sugerida para Martín Tapia.
 """
+import base64
 import html
 import json
 import re
+from pathlib import Path
 
 import plotly.graph_objects as go
 import streamlit as st
@@ -17,9 +19,27 @@ import estructura
 import interpretacion
 import patrones
 
-st.set_page_config(page_title="App Análisis Técnico + IA", layout="wide")
-st.title("Análisis Técnico + IA")
-st.caption("Detectar · Dibujar · Interpretar. Sube un archivo con Fecha, Apertura, Máximo, Mínimo y Cierre (Volumen opcional).")
+LOGO = Path(__file__).parent / "logo.png"  # logo de la universidad (opcional)
+
+st.set_page_config(page_title="Análisis Técnico + IA · Grupo 12", page_icon="📈", layout="wide")
+st.markdown("""<style>
+.encabezado {display:flex; align-items:center; gap:20px; padding:18px 24px; border-radius:12px;
+  background:linear-gradient(90deg,#063952 0%,#0E5A7E 100%); color:#fff; margin-bottom:18px;}
+.encabezado img {height:72px; background:#fff; border-radius:10px; padding:8px 12px;}
+.encabezado h1 {color:#fff; font-size:1.9rem; margin:0; padding:0;}
+.encabezado p {color:#DCE6F2; margin:4px 0 0 0; font-size:0.95rem;}
+.pie {color:#8A94A6; font-size:0.8rem; text-align:center; margin-top:32px;}
+</style>""", unsafe_allow_html=True)
+
+logo_html = ""
+if LOGO.exists():
+    logo_html = f'<img src="data:image/png;base64,{base64.b64encode(LOGO.read_bytes()).decode()}" alt="Logo">'
+    st.logo(str(LOGO))
+st.markdown(f"""<div class="encabezado">{logo_html}<div>
+<h1>Análisis Técnico + IA</h1>
+<p>Análisis Técnico Bursátil · Prof. Leopoldo Calderón · Grupo 12: Martín Tapia, Tomás Aedo y Martín Moraga</p>
+<p>Detectar · Dibujar · Interpretar — sube un archivo con Fecha, Apertura, Máximo, Mínimo y Cierre (Volumen opcional).</p>
+</div></div>""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("Parámetros")
@@ -133,11 +153,19 @@ fig.update_layout(height=700, xaxis_rangeslider_visible=False, legend=dict(orien
 st.plotly_chart(fig, width="stretch")
 
 # ---------- Interpretar ----------
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Tendencia", tend["tendencia"])
-c2.metric("Último cierre", f'{df["Cierre"].iat[-1]:,.2f}')
-c3.metric("Soporte cercano", f'{soportes[0]["nivel"]:,.2f}' if soportes else "—")
-c4.metric("Resistencia cercana", f'{resistencias[0]["nivel"]:,.2f}' if resistencias else "—")
+flecha = {"Alcista": "↗", "Bajista": "↘", "Lateral": "→"}[tend["tendencia"]]
+variacion = (df["Cierre"].iat[-1] / df["Cierre"].iat[0] - 1) * 100
+tarjetas = [
+    ("Tendencia", f'{flecha} {tend["tendencia"]}', None),
+    ("Último cierre", f'{df["Cierre"].iat[-1]:,.2f}', f"{variacion:+.1f}% en el periodo"),
+    ("Soporte cercano", f'{soportes[0]["nivel"]:,.2f}' if soportes else "—",
+     f'{soportes[0]["toques"]} toques' if soportes else None),
+    ("Resistencia cercana", f'{resistencias[0]["nivel"]:,.2f}' if resistencias else "—",
+     f'{resistencias[0]["toques"]} toques' if resistencias else None),
+]
+for col, (titulo, valor, detalle) in zip(st.columns(4), tarjetas):
+    with col.container(border=True):
+        st.metric(titulo, valor, detalle, delta_color="off" if titulo != "Último cierre" else "normal")
 st.write(f'**Estructura:** {tend["estructura"]}. {tend["medias"]}')
 
 resumen = interpretacion.resumen(df, puntos, tend, soportes, resistencias, recientes)
@@ -156,8 +184,9 @@ elif usar_ia:
 if texto is None:
     texto = interpretacion.interpretar_con_reglas(resumen)
 # La IA responde con negritas (**) y saltos de línea: se muestra como markdown
-st.markdown(texto.replace("$", "\\$").replace("\n", "  \n"))
-st.caption(f"Fuente del diagnóstico: {fuente}. No es una recomendación de inversión.")
+with st.container(border=True):
+    st.markdown(texto.replace("$", "\\$").replace("\n", "  \n"))
+    st.caption(f"Fuente del diagnóstico: {fuente}. No es una recomendación de inversión.")
 
 with st.expander("Patrones detectados en las últimas velas"):
     if recientes:
@@ -181,3 +210,6 @@ reporte = f"""<!doctype html><html lang="es"><head><meta charset="utf-8"><title>
 </body></html>"""
 st.download_button("Descargar análisis (gráfico + diagnóstico)", reporte, file_name=f"analisis_{nombre_archivo}.html",
                    mime="text/html", on_click="ignore")
+
+st.markdown('<div class="pie">Grupo 12 · Análisis Técnico Bursátil · 2026 · La app apoya al analista, no reemplaza su criterio.</div>',
+            unsafe_allow_html=True)
