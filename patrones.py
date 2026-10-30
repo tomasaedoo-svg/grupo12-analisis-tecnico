@@ -156,3 +156,20 @@ def recientes(hallazgos, df, ultimas=20):
     """Solo los patrones de las últimas `ultimas` velas, que son los relevantes para el diagnóstico."""
     limite = len(df) - ultimas
     return [h for h in hallazgos if h["i"] >= limite]
+
+
+def ubicar(hallazgos, df, soportes, resistencias, holgura):
+    """Agrega a cada patrón dónde ocurrió: en un soporte, en una resistencia o
+    en ninguna zona. Un patrón de giro en una zona relevante pesa más.
+    `holgura` es cuánto puede alejarse la vela de la zona (en precio)."""
+    for h in hallazgos:
+        bajo, alto = float(df["Minimo"].iat[h["i"]]), float(df["Maximo"].iat[h["i"]])
+        h["ubicacion"] = "fuera de zonas clave"
+        for zonas, nombre in [(soportes, "soporte"), (resistencias, "resistencia")]:
+            for z in zonas:
+                if bajo <= z["alto"] + holgura and alto >= z["bajo"] - holgura:
+                    h["ubicacion"] = f'en {nombre} {z["nivel"]:,.2f}'
+                    break
+            if h["ubicacion"] != "fuera de zonas clave":
+                break
+    return hallazgos

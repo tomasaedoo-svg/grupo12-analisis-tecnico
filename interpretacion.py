@@ -28,7 +28,7 @@ Reglas obligatorias:
 - No presentes predicciones como certezas: usa "podría", "sugiere", "advierte".
 - Justifica cada conclusión con la evidencia técnica del JSON (pivotes, toques de la zona, patrón y su ubicación).
 - Si la evidencia es débil o contradictoria (por ejemplo, estructura lateral o un patrón contrario a la tendencia), dilo explícitamente.
-- Considera la ubicación del patrón: un patrón bajista cerca de una resistencia o uno alcista cerca de un soporte pesa más.
+- Considera la ubicación del patrón (campo "ubicacion"): un patrón bajista en una resistencia o uno alcista en un soporte pesa más; uno fuera de zonas clave pesa menos.
 - No des recomendaciones de compra o venta."""
 
 
@@ -53,7 +53,7 @@ def resumen(df, puntos, tend, soportes, resistencias, patrones_recientes):
         "resistencias": [zona(z) for z in resistencias],
         "patrones_recientes": [
             {"fecha": f'{h["fecha"]:%d-%m-%Y}', "patron": h["patron"], "sesgo": h["sesgo"],
-             "velas_atras": len(df) - 1 - h["i"]}
+             "velas_atras": len(df) - 1 - h["i"], "ubicacion": h.get("ubicacion", "sin dato")}
             for h in patrones_recientes
         ],
     }
@@ -155,7 +155,7 @@ def interpretar_con_reglas(datos):
         texto += f" El precio está a {abs(sop['distancia_pct'])}% de un soporte con {sop['toques']} toques."
     if ultimo:
         contrario = (t == "Alcista" and ultimo["sesgo"] == "bajista") or (t == "Bajista" and ultimo["sesgo"] == "alcista")
-        texto += f" Aparece un {ultimo['patron']} de sesgo {ultimo['sesgo']}"
+        texto += f" Aparece un {ultimo['patron']} de sesgo {ultimo['sesgo']} ({ultimo['ubicacion']})"
         if contrario:
             texto += ", contrario a la tendencia, lo que podría advertir una corrección o pausa de corto plazo."
         elif t == "Lateral":
