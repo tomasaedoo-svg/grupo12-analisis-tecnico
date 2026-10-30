@@ -2,14 +2,15 @@
 
 1. `resumen()` junta en un diccionario todo lo que la app detectó (son los únicos
    datos que ve la IA, así no puede inventar información que no está en el gráfico).
-2. `interpretar_con_ia()` le pide a Claude que redacte el diagnóstico con las
-   restricciones del enunciado.
+2. `interpretar_con_ia()` le pide a la IA (Gemini de Google, o Claude si se
+   configura esa clave) que redacte el diagnóstico con las restricciones del enunciado.
 3. `interpretar_con_reglas()` es el respaldo si no hay clave de API o falla la conexión.
 """
 import json
 import os
 
-MODELO = "claude-opus-5-5"
+MODELOS_GEMINI = ["gemini-flash-latest", "gemini-2.5-flash"]  # se prueba en orden
+MODELO_CLAUDE = "claude-opus-5-5"
 
 INSTRUCCIONES = """Eres un analista técnico bursátil que apoya a estudiantes de un magíster en finanzas.
 Recibirás en JSON los resultados que una aplicación calculó a partir de datos OHLC.
@@ -58,31 +59,67 @@ def resumen(df, puntos, tend, soportes, resistencias, patrones_recientes):
     }
 
 
-def obtener_clave():
-    """Busca la clave en los secretos de Streamlit o en la variable de entorno."""
+def _secreto(nombre):
     try:
         import streamlit as st
-        if "ANTHROPIC_API_KEY" in st.secrets:
-            return st.secrets["ANTHROPIC_API_KEY"]
+        if nombre in st.secrets:
+            return st.secrets[nombre]
     except Exception:
         pass
-    return os.environ.get("ANTHROPIC_API_KEY")
+    return os.environ.get(nombre)
 
 
-def interpretar_con_ia(datos, clave):
-    """Pide el diagnóstico a Claude. Devuelve el texto, o lanza una excepción si falla."""
+def obtener_clave():
+    """Busca la clave en los secretos de Streamlit o en variables de entorno.
+    Devuelve (proveedor, clave) o (None, None). Gemini tiene prioridad."""
+    if _secreto("GEMINI_API_KEY"):
+        return "gemini", _secreto("GEMINI_API_KEY")
+    if _secreto("ANTHROPIC_API_KEY"):
+        return "claude", _secreto("ANTHROPIC_API_KEY")
+    return None, None
+
+
+def _mensaje(datos):
+    return "Resultados del análisis:\n" + json.dumps(datos, ensure_ascii=False, indent=2)
+
+
+def interpretar_con_ia(datos, proveedor, clave):
+    """Pide el diagnóstico a la IA. Devuelve el texto, o lanza una excepción si falla."""
+    if proveedor == "gemini":
+        return _con_gemini(datos, clave)
+    return _con_claude(datos, clave)
+
+
+def _con_gemini(datos, clave):
+    from google import genai
+    from google.genai import types
+
+    cliente = genai.Client(api_key=clave)
+    config = types.GenerateContentConfig(system_instruction=INSTRUCCIONES)
+    ultimo_error = None
+    for modelo in MODELOS_GEMINI:
+        try:
+            respuesta = cliente.models.generate_content(model=modelo, contents=_mensaje(datos), config=config)
+            if respuesta.text:
+                return respuesta.text.strip()
+        except Exception as e:  # si un modelo no está disponible se prueba el siguiente
+            ultimo_error = e
+    raise RuntimeError(f"Gemini no respondió ({ultimo_error})")
+
+
+def _con_claude(datos, clave):
     import anthropic
 
     cliente = anthropic.Anthropic(api_key=clave)
     respuesta = cliente.beta.messages.create(
-        model=MODELO,
+        model=MODELO_CLAUDE,
         max_tokens=4000,
         system=INSTRUCCIONES,
         output_config={"effort": "low"},
         # Si el modelo rechaza la consulta, la API la reintenta con otro modelo
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
-        messages=[{"role": "user", "content": "Resultados del análisis:\n" + json.dumps(datos, ensure_ascii=False, indent=2)}],
+        messages=[{"role": "user", "content": _mensaje(datos)}],
     )
     if respuesta.stop_reason == "refusal":
         raise RuntimeError("La IA no respondió esta consulta.")

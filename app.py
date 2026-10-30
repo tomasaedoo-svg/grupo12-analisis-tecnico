@@ -24,7 +24,7 @@ with st.sidebar:
                         help="Más alto = solo los pivotes más importantes.")
     ultimas = st.slider("Patrones: revisar las últimas N velas", 5, 60, 20)
     ver_todos = st.checkbox("Mostrar patrones de todo el periodo", value=False)
-    usar_ia = st.checkbox("Interpretar con IA (Claude)", value=True)
+    usar_ia = st.checkbox("Interpretar con IA", value=True)
 
 if archivo is None:
     st.info("Sube un archivo para empezar. Puedes descargar uno desde Yahoo Finance (pestaña Historical Data → Download).")
@@ -117,12 +117,13 @@ st.write(f'**Estructura:** {tend["estructura"]}. {tend["medias"]}')
 
 resumen = interpretacion.resumen(df, puntos, tend, soportes, resistencias, recientes)
 st.subheader("Diagnóstico técnico")
-clave = interpretacion.obtener_clave()
+proveedor, clave = interpretacion.obtener_clave()
 texto, fuente = None, "reglas"
 if usar_ia and clave:
     with st.spinner("La IA está redactando el diagnóstico..."):
         try:
-            texto, fuente = interpretacion.interpretar_con_ia(resumen, clave), "IA"
+            texto = interpretacion.interpretar_con_ia(resumen, proveedor, clave)
+            fuente = "IA (Gemini de Google)" if proveedor == "gemini" else "IA (Claude de Anthropic)"
         except Exception as e:
             st.warning(f"No se pudo usar la IA ({e}). Se muestra el diagnóstico por reglas.")
 elif usar_ia:

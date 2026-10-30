@@ -10,7 +10,7 @@ Versión 0, armada el 26-oct-2026 como punto de partida. Ya funciona de punta a 
 | `datos.py` | Lee y valida el CSV/Excel (columnas en español o inglés, formato Yahoo, coma decimal) | Martín Tapia |
 | `estructura.py` | Pivotes, HH/HL/LH/LL, tendencia, línea de tendencia, soportes y resistencias | Tomás |
 | `patrones.py` | Patrones de velas de la imagen Patterns-2 | Martín Moraga |
-| `interpretacion.py` | Resumen de hallazgos e interpretación con IA (y respaldo por reglas) | Martín Moraga |
+| `interpretacion.py` | Resumen de hallazgos e interpretación con IA (Gemini o Claude, y respaldo por reglas) | Martín Moraga |
 | `ejemplos/` | Dos CSV **sintéticos** (inventados) solo para probar que la app corre. Para el trabajo usen datos reales. | |
 
 ## Cómo correrla en el computador
@@ -25,13 +25,13 @@ Yahoo Finance → buscar la acción (por ejemplo SQM-B.SN, CHILE.SN, AAPL) → H
 
 ## IA
 
-La interpretación usa Claude (Anthropic). Se necesita una clave de API (console.anthropic.com, con unos pocos dólares de crédito alcanza). Para usarla localmente, crear `.streamlit/secrets.toml` con:
+La interpretación usa **Gemini de Google** (gratis). La clave se saca en aistudio.google.com → Get API key. En Streamlit Cloud va en Settings → Secrets:
 
 ```
-ANTHROPIC_API_KEY = "la-clave"
+GEMINI_API_KEY = "la-clave"
 ```
 
-Nunca subir ese archivo a GitHub. En Streamlit Cloud la clave va en Settings → Secrets. Sin clave, la app igual funciona con el diagnóstico por reglas.
+Para usarla localmente, la misma línea va en `.streamlit/secrets.toml` (nunca subir ese archivo a GitHub). También acepta `ANTHROPIC_API_KEY` para usar Claude. Sin clave, la app funciona igual con el diagnóstico por reglas.
 
 ## Publicarla (para la demo)
 

@@ -2,4 +2,5 @@ streamlit>=1.40
 plotly>=5.20
 pandas>=2.2
 openpyxl>=3.1
+google-genai>=1.0
 anthropic>=2.3
