@@ -9,7 +9,7 @@
 import json
 import os
 
-MODELOS_GEMINI = ["gemini-flash-latest", "gemini-2.5-flash"]  # se prueba en orden
+MODELOS_GEMINI = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"]  # se prueba en orden
 MODELO_CLAUDE = "claude-opus-5-5"
 
 INSTRUCCIONES = """Eres un analista técnico bursátil que apoya a estudiantes de un magíster en finanzas.
@@ -97,7 +97,7 @@ def _con_gemini(datos, clave):
     cliente = genai.Client(api_key=clave)
     config = types.GenerateContentConfig(system_instruction=INSTRUCCIONES)
     ultimo_error = None
-    for modelo in MODELOS_GEMINI:
+    for modelo in MODELOS_GEMINI + _flash_disponibles(cliente):
         try:
             respuesta = cliente.models.generate_content(model=modelo, contents=_mensaje(datos), config=config)
             if respuesta.text:
@@ -105,6 +105,18 @@ def _con_gemini(datos, clave):
         except Exception as e:  # si un modelo no está disponible se prueba el siguiente
             ultimo_error = e
     raise RuntimeError(f"Gemini no respondió ({ultimo_error})")
+
+
+def _flash_disponibles(cliente):
+    """Si Google retira los modelos de la lista, busca los modelos "flash" que la clave
+    sí puede usar (los más nuevos primero)."""
+    try:
+        nombres = [m.name.split("/")[-1] for m in cliente.models.list()
+                   if "flash" in m.name and "generateContent" in (m.supported_actions or [])]
+    except Exception:
+        return []
+    utiles = [n for n in nombres if not any(x in n for x in ("image", "tts", "audio", "live", "embedding"))]
+    return [n for n in sorted(utiles, reverse=True) if n not in MODELOS_GEMINI][:5]
 
 
 def _con_claude(datos, clave):
