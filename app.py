@@ -267,10 +267,10 @@ if tend["tendencia"] == "Lateral" and soportes and resistencias:
         fig.add_annotation(x=desde, y=resistencias[0]["nivel"], text="Rango lateral", showarrow=False, xanchor="left",
                            yanchor="bottom", font=dict(size=letra, color="#5AA9F0"), row=1, col=1)
 
-# Último precio (línea punteada; el valor aparece en la leyenda)
+# Último precio (línea roja gruesa y punteada para que se note; el valor aparece en la leyenda)
 ultimo = float(df["Cierre"].iat[-1])
 fig.add_trace(go.Scatter(x=[df["Fecha"].iat[0], df["Fecha"].iat[-1]], y=[ultimo, ultimo], mode="lines",
-                         name=f"Último cierre {ultimo:,.2f}", line=dict(color="#9DB2C3", width=1, dash="dot"),
+                         name=f"Último cierre {ultimo:,.2f}", line=dict(color="#FF3B3B", width=2.5, dash="dash"),
                          hoverinfo="skip"), row=1, col=1)
 
 # Pivotes con su etiqueta
