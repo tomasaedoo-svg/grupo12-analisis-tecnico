@@ -29,10 +29,12 @@ def _a_numero(serie):
     if pd.api.types.is_numeric_dtype(serie):
         return serie.astype(float)
     s = serie.astype(str).str.strip().str.replace("$", "", regex=False).str.replace(" ", "")
+    multiplo = s.str.upper().str[-1].map({"K": 1e3, "M": 1e6, "B": 1e9}).fillna(1.0)
+    s = s.str.replace(r"[KkMmBb]$", "", regex=True)
     con_coma_decimal = s.str.contains(r",\d{1,4}$", regex=True)
     s = s.where(~con_coma_decimal, s.str.replace(".", "", regex=False).str.replace(",", ".", regex=False))
     s = s.where(con_coma_decimal, s.str.replace(",", "", regex=False))
-    return pd.to_numeric(s, errors="coerce")
+    return pd.to_numeric(s, errors="coerce") * multiplo
 
 
 def cargar_ohlc(archivo, nombre=None):
@@ -54,6 +56,11 @@ def cargar_ohlc(archivo, nombre=None):
         for estandar, opciones in SINONIMOS.items():
             if estandar not in columnas and n in opciones:
                 columnas[estandar] = col
+    for col in crudo.columns:  # encabezados largos, ej. "Close Close price adjusted for splits."
+        primera = _normalizar(col).split(" ")[0]
+        for estandar, opciones in SINONIMOS.items():
+            if estandar not in columnas and col not in columnas.values() and primera in opciones:
+                columnas[estandar] = col
     # Si hay "Adj Close" y "Close", se usa "Close" (precio real del gráfico)
     faltan = [c for c in ["Fecha", "Apertura", "Maximo", "Minimo", "Cierre"] if c not in columnas]
     if faltan:
@@ -63,7 +70,7 @@ def cargar_ohlc(archivo, nombre=None):
         )
 
     df = pd.DataFrame({estandar: crudo[original] for estandar, original in columnas.items()})
-    df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce", dayfirst=_parece_dia_primero(df["Fecha"]))
+    df["Fecha"] = _leer_fechas(df["Fecha"])
     for col in ["Apertura", "Maximo", "Minimo", "Cierre"] + (["Volumen"] if "Volumen" in df else []):
         df[col] = _a_numero(df[col])
 
@@ -88,7 +95,33 @@ def cargar_ohlc(archivo, nombre=None):
     return df, avisos
 
 
+FORMATOS_FECHA = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%m-%d-%Y", "%d.%m.%Y",
+                  "%Y/%m/%d", "%d/%m/%y", "%m/%d/%y", "%b %d, %Y", "%d %b %Y"]
+
+
+def _leer_fechas(serie):
+    """Lee fechas en día/mes/año (Chile, Investing), mes/día/año (EE.UU.) u otros formatos.
+
+    Prueba cada formato y se queda con el que lee más filas; si empatan (todos los días son
+    menores o iguales a 12), elige el que deja las fechas en orden. Si ninguno sirve, usa la
+    lectura automática de pandas.
+    """
+    if pd.api.types.is_datetime64_any_dtype(serie):
+        return serie
+    texto = serie.astype(str).str.strip()
+    mejor, mejor_puntaje = None, (-1, -1)
+    for formato in FORMATOS_FECHA:
+        f = pd.to_datetime(texto, format=formato, exact=False, errors="coerce")
+        leidas = int(f.notna().sum())
+        ordenadas = int(f.dropna().is_monotonic_increasing or f.dropna().is_monotonic_decreasing)
+        if (leidas, ordenadas) > mejor_puntaje:
+            mejor, mejor_puntaje = f, (leidas, ordenadas)
+    if mejor is not None and mejor_puntaje[0] >= 0.9 * len(texto):
+        return mejor
+    return pd.to_datetime(texto, errors="coerce", dayfirst=_parece_dia_primero(texto))
+
+
 def _parece_dia_primero(serie):
     """Detecta fechas tipo 25/10/2026 (día primero), comunes en Chile."""
     muestra = serie.astype(str).head(50)
-    return bool(muestra.str.match(r"^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}").any())
+    return bool(muestra.str.match(r"^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}").any())
